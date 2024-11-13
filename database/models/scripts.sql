@@ -53,6 +53,7 @@ CREATE TABLE public.citas (
 	id serial NOT NULL,
 	fecha date NULL,
 	hora time without time zone NULL,
+	motivo varchar NULL,
 	estado varchar NULL,
 	medico_id int NULL,
 	paciente_id int NULL,
@@ -95,7 +96,7 @@ CREATE TABLE public.auditorias (
 	fecha date NULL,
 	nombre_paciente varchar NULL,
 	nombre_doctor varchar NULL,
-	motivo__cita varchar NULL,
+	motivo_cita varchar NULL,
 	diagnostico varchar NULL,
 	nombre_medicamento varchar NULL,
 	CONSTRAINT auditoria_pk PRIMARY KEY (id)
