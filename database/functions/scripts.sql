@@ -360,3 +360,24 @@ $$ LANGUAGE plpgsql;
 SELECT crear_examen('Hemograma', 200.0, TRUE, '2024-11-20', 'pendiente', 1);
 SELECT modificar_examen(1, 'Hemograma', 250.0, TRUE, '2024-11-21', 'completado');
 SELECT eliminar_examen(1);
+
+-- Búsqueda de los registros de auditoria por los atributos fecha, nombre del paciente, nombre de doctor.
+CREATE OR REPLACE FUNCTION buscar_auditorias(p_fecha DATE, p_nombre_paciente VARCHAR, p_nombre_doctor VARCHAR)
+RETURNS TABLE(
+    v_id INT,
+    v_fecha DATE,
+    v_nombre_paciente VARCHAR,
+    v_nombre_doctor VARCHAR,
+    v_motivo_cita VARCHAR,
+    v_diagnostico VARCHAR,
+    v_nombre_medicamento VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT id, fecha, nombre_paciente, nombre_doctor, motivo_cita, diagnostico, nombre_medicamento
+    FROM public.auditorias
+    WHERE fecha = p_fecha AND nombre_paciente = p_nombre_paciente AND nombre_doctor = p_nombre_doctor;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM buscar_auditorias('2024-12-30'::Date, 'Juan Perez', 'Dra. Ana Gomez');
