@@ -147,3 +147,10 @@ CREATE TABLE public.resultado (
 	CONSTRAINT resultado_examen_fk FOREIGN KEY (examen_id) REFERENCES public.examen(id),
 	CONSTRAINT resultado_medico_fk FOREIGN KEY (medico_id) REFERENCES public.medico(id)
 );
+
+-- Tabla clinica
+CREATE TABLE public.clinica (
+	id serial NOT NULL,
+	detalles jsonb NULL,
+	CONSTRAINT clinica_pk PRIMARY KEY (id)
+);

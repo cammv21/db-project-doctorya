@@ -1,4 +1,4 @@
--- Funciones para la creacion, modificacion y eliminacion de tanto paciente como doctores
+-- 1. y 2. Funciones para la creacion, modificacion y eliminacion de tanto paciente como doctores
 CREATE OR REPLACE FUNCTION crear_paciente(
     p_nombre VARCHAR,
     p_identificacion VARCHAR,
@@ -116,7 +116,7 @@ SELECT crear_medico('Dra. Ana Gomez', '23456789', 'RM12345', 'Cardiología', 'an
 SELECT modificar_medico(1, 'Dr. Carlos Lopez', '34567890', 'RM54321', 'Neurología', 'carlos@example.com', '555321987');
 SELECT eliminar_medico(1);
 
---Funcion crear cita dependiendo de la disponibilidad del medico
+-- 4. Funcion crear cita dependiendo de la disponibilidad del medico
 CREATE OR REPLACE FUNCTION crear_cita(
     p_fecha DATE,
     p_hora TIME,
@@ -150,7 +150,7 @@ $$ LANGUAGE plpgsql;
 -- Modo de uso de la función
 SELECT crear_cita('2024-11-15', '10:00:00', 'Consulta general', 'programada', 1, 1);
 
--- Creación, modificacion y eliminacion de Historias Clínicas
+-- 6. Creación, modificacion y eliminacion de Historias Clínicas
 CREATE OR REPLACE FUNCTION crear_historia_clinica(
     p_fecha DATE,
     p_sintomas VARCHAR,
@@ -221,7 +221,7 @@ SELECT crear_historia_clinica('2024-11-15', 'Dolor de cabeza', 'Migraña', 'Para
 SELECT modificar_historia_clinica(1, '2024-11-16'::Date, 'Fiebre', 'Gripe', 'Ibuprofeno', 'Reposo');
 SELECT eliminar_historia_clinica(1);
 
--- Funciones para la creación, modificacion y eliminacion de medicamento
+-- 7. Funciones para la creación, modificacion y eliminacion de medicamento
 CREATE OR REPLACE FUNCTION crear_medicamento(
     p_nombre VARCHAR,
     p_principio_activo VARCHAR,
@@ -296,7 +296,7 @@ SELECT crear_medicamento('Paracetamol', 'Paracetamol', 'Tableta', '500mg', 'Toma
 SELECT modificar_medicamento(1, 'Paracetamol', 'Paracetamol', 'Tableta', '500mg', 'Tomar 1 cada 6 horas', '7 días', 'entregado');
 SELECT eliminar_medicamento(1);
 
--- Funciones para la creación, modificacion y eliminacion de Examenes
+-- 8. Funciones para la creación, modificacion y eliminacion de Examenes
 CREATE OR REPLACE FUNCTION crear_examen(
     p_nombre VARCHAR,
     p_costo FLOAT4,
@@ -367,7 +367,7 @@ SELECT crear_examen('Hemograma', 200.0, TRUE, '2024-11-20', 'pendiente', 1);
 SELECT modificar_examen(1, 'Hemograma', 250.0, TRUE, '2024-11-21', 'completado');
 SELECT eliminar_examen(1);
 
--- Cada vez que se genere una cita, se debe hacer un registro en la tabla auditoria
+-- 12. Cada vez que se genere una cita, se debe hacer un registro en la tabla auditoria
 CREATE OR REPLACE FUNCTION registrar_auditoria_cita() 
 RETURNS TRIGGER AS $$
 BEGIN
@@ -385,7 +385,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Búsqueda de los registros de auditoria por los atributos fecha, nombre del paciente, nombre de doctor.
+-- 13. Búsqueda de los registros de auditoria por los atributos fecha, nombre del paciente, nombre de doctor.
 CREATE OR REPLACE FUNCTION buscar_auditoria(p_fecha DATE, p_nombre_paciente VARCHAR, p_nombre_doctor VARCHAR)
 RETURNS TABLE(
     v_id INT,
@@ -404,4 +404,235 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Modo de uso de las funcion
 SELECT * FROM buscar_auditoria('2024-12-30'::Date, 'Juan Perez', 'Dra. Ana Gomez');
+
+-- 5. Registro de citas para el paciente
+CREATE OR REPLACE FUNCTION registrar_cita(p_fecha DATE, p_hora TIME, p_motivo VARCHAR, p_estado VARCHAR, p_medico_id INT, p_paciente_id INT)
+RETURNS TABLE(
+    v_id INT,
+    v_fecha DATE,
+    v_hora TIME,
+    v_motivo VARCHAR,
+    v_estado VARCHAR,
+    v_medico_id INT,
+    v_paciente_id INT
+) AS $$
+BEGIN
+    INSERT INTO cita (fecha, hora, motivo, estado, medico_id, paciente_id)
+    VALUES (p_fecha, p_hora, p_motivo, p_estado, p_medico_id, p_paciente_id)
+    RETURNING id, fecha, hora, motivo, estado, medico_id, paciente_id INTO STRICT v_id, v_fecha, v_hora, v_motivo, v_estado, v_medico_id, v_paciente_id;
+
+    RETURN QUERY SELECT v_id, v_fecha, v_hora, v_motivo, v_estado, v_medico_id, v_paciente_id;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM registrar_cita('2024-11-20','8:30:00', 'Consulta general', 'completada', 1, 1);
+
+-- 3. Calendario de citas por médico y especialidad.
+CREATE OR REPLACE FUNCTION calendario_citas_medico_especialidad(p_medico_id INT DEFAULT NULL, p_especialidad VARCHAR DEFAULT NULL)
+RETURNS TABLE(
+    medico_nombre VARCHAR,
+    especialidad VARCHAR,
+    cita_fecha DATE,
+    cita_hora TIME,
+    paciente_nombre VARCHAR,
+    motivo VARCHAR,
+    estado VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT m.nombre AS medico_nombre, m.especialidad, c.fecha AS cita_fecha, c.hora AS cita_hora,
+        p.nombre AS paciente_nombre, c.motivo, c.estado
+    FROM 
+        public.cita c
+		    JOIN medico m ON c.medico_id = m.id
+		    JOIN paciente p ON c.paciente_id = p.id
+    WHERE (p_medico_id IS NULL OR m.id = p_medico_id) AND (p_especialidad IS NULL OR m.especialidad ILIKE p_especialidad)
+    ORDER BY 
+        m.nombre, c.fecha, c.hora;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM calendario_citas_medico_especialidad();
+SELECT * FROM calendario_citas_medico_especialidad(p_medico_id := 1, p_especialidad := 'Cardiología');
+
+-- 9. Registro de resultados de los exámenes.
+CREATE OR REPLACE FUNCTION registrar_resultado_examen(
+    p_diagnostico VARCHAR,
+    p_tratamiento VARCHAR,
+    p_examen_id INT,
+    p_medico_id INT
+)
+RETURNS TABLE(
+    v_resultado_id INT,
+    v_diagnostico VARCHAR,
+    v_tratamiento VARCHAR,
+    v_examen_id INT,
+    v_medico_id INT
+) AS $$
+BEGIN
+    INSERT INTO resultado (diagnostico, tratamiento, examen_id, medico_id)
+    VALUES (p_diagnostico, p_tratamiento, p_examen_id, p_medico_id)
+    RETURNING id AS resultado_id, p_diagnostico, p_tratamiento, p_examen_id, p_medico_id
+	INTO v_resultado_id, v_diagnostico, v_tratamiento, v_examen_id, v_medico_id;
+
+	RETURN QUERY SELECT v_resultado_id, v_diagnostico, v_tratamiento, v_examen_id, v_medico_id;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM registrar_resultado_examen('Diagnóstico positivo para diabetes', 'Cambios en dieta y medicación', 1, 1);
+
+-- Procedimiento insertar clinica
+CREATE OR REPLACE PROCEDURE crear_clinica(p_detalles VARCHAR)
+AS $$
+BEGIN
+    INSERT INTO clinica(detalles) VALUES (xmlparse(document p_detalles));
+END;
+$$ LANGUAGE plpgsql;
+
+
+CALL crear_clinica('<clinica><nombre>Clínica San Juan</nombre><director>Dr. Juan Pérez</director><camas>100</camas><direccion>Calle 123, Ciudad</direccion></clinica>');
+
+-- 10. Clínica en formato json con posibilidad de consultar datos el director de la clínica.
+CREATE OR REPLACE PROCEDURE obtener_director_clinica(p_nombre_clinica VARCHAR)
+AS $$
+DECLARE
+    v_director VARCHAR;
+BEGIN
+    SELECT c.director, c.nombre INTO v_director
+	FROM clinica, xmltable('/clinica' passing detalles columns nombre text path 'nombre', director text path 'director') as c
+    WHERE c.nombre = p_nombre_clinica;
+
+    IF v_director IS NULL THEN
+        RAISE EXCEPTION 'No se encontró una clínica con el nombre %', p_nombre_clinica;
+    END IF;
+
+    RAISE NOTICE 'El director es: %', v_director;
+END;
+$$ LANGUAGE plpgsql;
+
+CALL obtener_director_clinica('Clínica San Juan');
+
+-- 11. Informe de citas del mes del médico, citas pendientes por parte de cada paciente, medicamentos entregados, exámenes pendientes del paciente.
+CREATE OR REPLACE PROCEDURE generar_informe_citas_mes_medico(p_medico_id INT)
+AS $$
+BEGIN
+    INSERT INTO informe (fecha, tipo, contenido)
+    VALUES (CURRENT_DATE,'Informe de citas del mes del médico',
+           (SELECT jsonb_agg(jsonb_build_object(
+                    'fecha', fecha,
+                    'hora', hora,
+                    'paciente_id', paciente_id,
+                    'estado', estado           ))
+            FROM cita
+            WHERE medico_id = p_medico_id AND EXTRACT(MONTH FROM fecha) = EXTRACT(MONTH FROM CURRENT_DATE)));
+END;
+$$ LANGUAGE plpgsql;
+
+CALL generar_informe_citas_mes_medico(1);
+
+CREATE OR REPLACE PROCEDURE generar_informe_citas_pendientes()
+AS $$
+BEGIN
+    INSERT INTO informe (fecha, tipo, contenido)
+    VALUES (CURRENT_DATE, 'Informe de citas pendientes por parte de cada paciente',
+           (SELECT jsonb_agg(jsonb_build_object(
+                    'nombre paciente', p.nombre,
+                    'citas pendientes', sub.citas_pendientes))
+            FROM (SELECT paciente_id, COUNT(*) AS citas_pendientes
+                	FROM cita
+                	WHERE estado = 'programada'
+                	GROUP BY paciente_id) sub
+            JOIN paciente p ON p.id = sub.paciente_id));
+END;
+$$ LANGUAGE plpgsql;
+
+CALL generar_informe_citas_pendientes();
+
+CREATE OR REPLACE PROCEDURE generar_informe_medicamentos_entregados()
+AS $$
+BEGIN
+    INSERT INTO informe (fecha, tipo, contenido)
+    VALUES (
+        CURRENT_DATE,
+        'Informe de medicamentos entregados',
+        (
+            SELECT jsonb_agg(
+                jsonb_build_object(
+                    'historia clinica id', historia_clinica_id,
+                    'medicamento', nombre,
+                    'estado', estado
+                )
+            )
+            FROM medicamento
+            WHERE estado = 'entregado'
+        )
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+CALL generar_informe_medicamentos_entregados();
+
+CREATE OR REPLACE PROCEDURE generar_informe_examenes_pendientes()
+AS $$
+BEGIN
+    INSERT INTO informe (fecha, tipo, contenido)
+    VALUES (CURRENT_DATE, 'Informe de exámenes pendientes',
+           (SELECT jsonb_agg(jsonb_build_object(
+                    'paciente', p.nombre,
+                    'examen', e.nombre,
+                    'fecha', e.fecha,
+                    'estado', e.estado))
+            FROM examen e
+            JOIN historia_clinica hc ON e.historia_clinica_id = hc.id
+			JOIN cita c ON c.id = hc.cita_id
+			JOIN  paciente p ON c.paciente_id = p.id
+            WHERE e.estado = 'pendiente'));
+END;
+$$ LANGUAGE plpgsql;
+
+CALL generar_informe_examenes_pendientes();
+
+-- Modificación y eliminación de nodos en el dato de xml.
+CREATE OR REPLACE PROCEDURE modificar_clinica_por_director(director_nombre VARCHAR, p_detalles VARCHAR)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE clinica
+    SET detalles = xmlparse(document p_detalles)
+    WHERE id IN (SELECT id FROM clinica, XMLTABLE('/clinica' PASSING detalles COLUMNS director TEXT PATH 'director') AS c
+        WHERE c.director = director_nombre);
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No se encontró una clínica con el director %', director_nombre;
+    END IF;
+END;
+$$;
+
+CALL modificar_clinica_por_director('Dr. Juan Pérez','<clinica><nombre>Clínica San Juan de Dios</nombre><director>Juan Pérez</director><camas>100</camas><direccion>Calle Nueva 456</direccion></clinica>');
+
+CREATE OR REPLACE PROCEDURE eliminar_clinica_por_nombre(nombre_clinica VARCHAR)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM clinica
+    WHERE id IN (
+        SELECT id
+        FROM clinica,
+        XMLTABLE(
+            '/clinica'
+            PASSING detalles
+            COLUMNS nombre TEXT PATH 'nombre'
+        ) AS c
+        WHERE c.nombre = nombre_clinica
+    );
+   
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No se encontró una clínica con el nombre %', nombre_clinica;
+    END IF;
+END;
+$$;
+
+CALL eliminar_clinica_por_nombre('Clínica San Juan de Dios');
