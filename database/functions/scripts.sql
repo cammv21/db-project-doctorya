@@ -798,6 +798,10 @@ BEGIN
     VALUES (p_nombre, p_tipo, p_fecha_inicio, p_fecha_fin, p_celular);
 
 	RAISE NOTICE 'Se creo el seguro medico';
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
+        RETURN FALSE;
 END;
 $$;
 
@@ -842,6 +846,9 @@ BEGIN
     END LOOP;
 
     CLOSE cur_citas;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
 END;
 $$;
 
@@ -875,6 +882,9 @@ BEGIN
     END LOOP;
 
     CLOSE cur_clinicas;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
 END;
 $$;
 
@@ -899,7 +909,124 @@ BEGIN
     END LOOP;
 
     CLOSE cur_seguros;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
 END;
 $$;
 
 CALL registrar_alertas_seguros_vencimiento();
+
+-- Registro de disparadores
+CREATE OR REPLACE FUNCTION actualizar_estado_seguro_vencido()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.fecha_fin < CURRENT_DATE THEN
+        RAISE NOTICE 'Seguro % vencido el %', NEW.nombre, NEW.fecha_fin;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_camas_clinica()
+RETURNS TRIGGER AS $$
+DECLARE
+    cantidad_camas INTEGER;
+BEGIN
+    cantidad_camas := COALESCE((xpath('//cantidad_camas/text()', NEW.detalles::xml)::text[])[1]::INTEGER,0);
+
+    IF cantidad_camas < 1 THEN
+        RAISE EXCEPTION 'La clínica debe tener al menos una cama';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION calcular_dosis_total()
+RETURNS TRIGGER AS $$
+DECLARE
+    cantidad_diaria INTEGER; 
+    dias INTEGER; 
+    total_miligramos INTEGER; 
+BEGIN
+    cantidad_diaria := regexp_replace(NEW.dosis, '[^0-9]', '', 'g')::INTEGER;
+    dias := regexp_replace(NEW.duracion, '[^0-9]', '', 'g')::INTEGER;
+
+    total_miligramos := cantidad_diaria * dias;
+
+    RAISE NOTICE 'El paciente tomará un total de % miligramos durante % días', total_miligramos, dias;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_citas_duplicadas()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM cita
+        WHERE paciente_id = NEW.paciente_id AND medico_id = NEW.medico_id AND fecha = NEW.fecha
+    ) THEN
+        RAISE EXCEPTION 'El paciente ya tiene una cita con este médico en esta fecha';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_costo_examen()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.costo < 1 THEN
+        RAISE EXCEPTION 'El debe de tener valor mayor a 0';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_duracion_seguro()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.fecha_inicio >= NEW.fecha_fin THEN
+        RAISE NOTICE 'La fecha de inicio del seguro (%), debe ser anterior a la fecha de finalización (%)', NEW.fecha_inicio, NEW.fecha_fin;
+        RAISE EXCEPTION 'Duración del seguro no válida';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_tipo_seguros()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.tipo != 'Premium' AND NEW.tipo != 'Privado'THEN
+        RAISE EXCEPTION 'El tipo de seguro debe ser Premium o Privado';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_medicamento_duplicado()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM medicamento
+        WHERE nombre = NEW.nombre AND principio_activo = NEW.principio_activo
+    ) THEN
+        RAISE EXCEPTION 'El medicamento % de tipo % ya existe en la base de datos', NEW.nombre, NEW.principio_activo;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION validar_horario_cita()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.hora < '08:00:00'::Time OR NEW.hora > '18:00:00'::Time THEN
+        RAISE EXCEPTION 'El horario de la cita % está fuera del rango permitido (08:00 - 18:00)', NEW.hora;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
