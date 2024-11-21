@@ -5,6 +5,8 @@ import { HealthModule } from './health/health.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SeguroMedicoModule } from './seguro_medico/seguro_medico.module';
 import { PacienteModule } from './paciente/paciente.module';
+import { MedicoModule } from './medico/medico.module';
+import { CitaModule } from './cita/cita.module';
 
 
 @Module({
@@ -22,6 +24,8 @@ import { PacienteModule } from './paciente/paciente.module';
     HealthModule,
     SeguroMedicoModule,
     PacienteModule,
+    MedicoModule,
+    CitaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

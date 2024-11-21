@@ -2,7 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { PacienteService } from './paciente.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('System - Paciente')
 @Controller('paciente')
 export class PacienteController {
   constructor(private readonly pacienteService: PacienteService) {}
@@ -17,14 +19,14 @@ export class PacienteController {
     return this.pacienteService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.pacienteService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.pacienteService.findOne(+id);
+  // }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePacienteDto: UpdatePacienteDto) {
-    return this.pacienteService.update(+id, updatePacienteDto);
+  update(@Param('id') id: number, @Body() updatePacienteDto: UpdatePacienteDto) {
+    return this.pacienteService.update(id, updatePacienteDto);
   }
 
   @Delete(':id')

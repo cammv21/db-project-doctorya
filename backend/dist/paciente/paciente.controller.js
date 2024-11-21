@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const paciente_service_1 = require("./paciente.service");
 const create_paciente_dto_1 = require("./dto/create-paciente.dto");
 const update_paciente_dto_1 = require("./dto/update-paciente.dto");
+const swagger_1 = require("@nestjs/swagger");
 let PacienteController = class PacienteController {
     constructor(pacienteService) {
         this.pacienteService = pacienteService;
@@ -27,11 +28,8 @@ let PacienteController = class PacienteController {
     findAll() {
         return this.pacienteService.findAll();
     }
-    findOne(id) {
-        return this.pacienteService.findOne(+id);
-    }
     update(id, updatePacienteDto) {
-        return this.pacienteService.update(+id, updatePacienteDto);
+        return this.pacienteService.update(id, updatePacienteDto);
     }
     remove(id) {
         return this.pacienteService.remove(+id);
@@ -52,18 +50,11 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PacienteController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], PacienteController.prototype, "findOne", null);
-__decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_paciente_dto_1.UpdatePacienteDto]),
+    __metadata("design:paramtypes", [Number, update_paciente_dto_1.UpdatePacienteDto]),
     __metadata("design:returntype", void 0)
 ], PacienteController.prototype, "update", null);
 __decorate([
@@ -74,6 +65,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PacienteController.prototype, "remove", null);
 exports.PacienteController = PacienteController = __decorate([
+    (0, swagger_1.ApiTags)('System - Paciente'),
     (0, common_1.Controller)('paciente'),
     __metadata("design:paramtypes", [paciente_service_1.PacienteService])
 ], PacienteController);

@@ -28,9 +28,6 @@ let SeguroMedicoController = class SeguroMedicoController {
     findAll() {
         return this.seguroMedicoService.findAll();
     }
-    findOne(id) {
-        return this.seguroMedicoService.findOne(+id);
-    }
     update(id, updateSeguroMedicoDto) {
         return this.seguroMedicoService.update(+id, updateSeguroMedicoDto);
     }
@@ -53,13 +50,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SeguroMedicoController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], SeguroMedicoController.prototype, "findOne", null);
-__decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
@@ -75,7 +65,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SeguroMedicoController.prototype, "remove", null);
 exports.SeguroMedicoController = SeguroMedicoController = __decorate([
-    (0, swagger_1.ApiTags)('System Seguro Medico'),
+    (0, swagger_1.ApiTags)('System - Seguro Medico'),
     (0, common_1.Controller)('seguro-medico'),
     __metadata("design:paramtypes", [seguro_medico_service_1.SeguroMedicoService])
 ], SeguroMedicoController);

@@ -6,7 +6,6 @@ export declare class SeguroMedicoController {
     constructor(seguroMedicoService: SeguroMedicoService);
     create(createSeguroMedicoDto: CreateSeguroMedicoDto): string;
     findAll(): Promise<import("./entities/seguro_medico.entity").SeguroMedico[]>;
-    findOne(id: string): string;
     update(id: string, updateSeguroMedicoDto: UpdateSeguroMedicoDto): string;
     remove(id: string): string;
 }

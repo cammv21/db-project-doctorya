@@ -14,6 +14,8 @@ const health_module_1 = require("./health/health.module");
 const typeorm_1 = require("@nestjs/typeorm");
 const seguro_medico_module_1 = require("./seguro_medico/seguro_medico.module");
 const paciente_module_1 = require("./paciente/paciente.module");
+const medico_module_1 = require("./medico/medico.module");
+const cita_module_1 = require("./cita/cita.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -33,6 +35,8 @@ exports.AppModule = AppModule = __decorate([
             health_module_1.HealthModule,
             seguro_medico_module_1.SeguroMedicoModule,
             paciente_module_1.PacienteModule,
+            medico_module_1.MedicoModule,
+            cita_module_1.CitaModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

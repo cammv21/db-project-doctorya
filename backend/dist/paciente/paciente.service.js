@@ -16,8 +16,30 @@ let PacienteService = class PacienteService {
     constructor(dataSource) {
         this.dataSource = dataSource;
     }
-    create(createPacienteDto) {
-        return 'This action adds a new paciente';
+    async create(createPacienteDto) {
+        const { nombre, identificacion, fecha_nacimiento, sexo, direccion, email, celular, seguro_id } = createPacienteDto;
+        try {
+            const result = await this.dataSource.query(`SELECT crear_paciente($1, $2, $3, $4, $5, $6, $7, $8) AS success`, [
+                nombre,
+                identificacion,
+                fecha_nacimiento,
+                sexo,
+                direccion,
+                email,
+                celular,
+                seguro_id || null,
+            ]);
+            if (result[0]?.success) {
+                return { message: 'Paciente creado exitosamente' };
+            }
+            else {
+                throw new Error('No se pudo crear el paciente');
+            }
+        }
+        catch (error) {
+            console.error('Error creando paciente:', error);
+            throw new Error('Error creando paciente: ' + error.message);
+        }
     }
     async findAll() {
         try {
@@ -32,11 +54,46 @@ let PacienteService = class PacienteService {
     findOne(id) {
         return `This action returns a #${id} paciente`;
     }
-    update(id, updatePacienteDto) {
-        return `This action updates a #${id} paciente`;
+    async update(id, updatePacienteDto) {
+        const { nombre, identificacion, fecha_nacimiento, sexo, direccion, email, celular, seguro_id, } = updatePacienteDto;
+        try {
+            const result = await this.dataSource.query(`SELECT modificar_paciente($1, $2, $3, $4, $5, $6, $7, $8, $9) AS success`, [
+                id,
+                nombre,
+                identificacion,
+                fecha_nacimiento,
+                sexo,
+                direccion,
+                email,
+                celular,
+                seguro_id || null,
+            ]);
+            if (result[0]?.success) {
+                return { message: 'Paciente actualizado exitosamente' };
+            }
+            else {
+                throw new Error('No se pudo actualizar el paciente');
+            }
+        }
+        catch (error) {
+            console.error('Error actualizando paciente:', error);
+            throw new Error('Error actualizando paciente: ' + error.message);
+        }
     }
-    remove(id) {
-        return `This action removes a #${id} paciente`;
+    async remove(id) {
+        try {
+            const result = await this.dataSource.query(`SELECT eliminar_paciente($1) AS success`, [id]);
+            if (result[0]?.success) {
+                return { message: 'Paciente eliminado exitosamente' };
+            }
+            else {
+                throw new Error('No se pudo eliminar el paciente');
+            }
+        }
+        catch (error) {
+            console.error('Error eliminando paciente:', error);
+            throw new Error('Error eliminando paciente: ' + error.message);
+        }
     }
 };
 exports.PacienteService = PacienteService;
