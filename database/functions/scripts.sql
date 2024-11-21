@@ -1,4 +1,34 @@
 -- 1. y 2. Funciones para la creacion, modificacion y eliminacion de tanto paciente como doctores
+
+-------------------------------------------------- Paciente
+CREATE OR REPLACE FUNCTION obtener_pacientes()
+RETURNS TABLE (
+    p_id INT,
+    p_nombre VARCHAR,
+    p_identificacion VARCHAR,
+    p_fecha_nacimiento DATE,
+    p_sexo CHAR,
+    p_direccion VARCHAR,
+    p_email VARCHAR,
+    p_celular VARCHAR,
+    p_seguro_id INT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        id,
+        nombre,
+        identificacion,
+        fecha_nacimiento,
+        sexo,
+        direccion,
+        email,
+        celular,
+        seguro_id
+    FROM paciente;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION crear_paciente(
     p_nombre VARCHAR,
     p_identificacion VARCHAR,
@@ -52,6 +82,32 @@ EXCEPTION
     WHEN others THEN
         RAISE EXCEPTION 'Error: %', SQLERRM;
         RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+
+-------------------------------------------------- Medico
+
+CREATE OR REPLACE FUNCTION obtener_medicos()
+RETURNS TABLE (
+    m_id INT,
+    m_nombre VARCHAR,
+    m_identificacion VARCHAR,
+    m_registro_medico VARCHAR,
+    m_especialidad VARCHAR,
+    m_email VARCHAR,
+    m_celular VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        id,
+        nombre,
+        identificacion,
+        registro_medico,
+        especialidad,
+        email,
+        celular
+    FROM medico;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -111,10 +167,12 @@ $$ LANGUAGE plpgsql;
 SELECT crear_paciente('Juan Perez', '12345678', '1990-05-12', 'M', 'Calle Falsa 123', 'juan@example.com', '555123456', 1);
 SELECT modificar_paciente(1, 'Juan Perez', '87654321', '1990-05-12', 'M', 'Calle Verdadera 456', 'juan_new@example.com', '555654321', 1);
 SELECT eliminar_paciente(1);
+SELECT * FROM obtener_pacientes();
 
 SELECT crear_medico('Dra. Ana Gomez', '23456789', 'RM12345', 'Cardiología', 'ana@example.com', '555987654');
 SELECT modificar_medico(1, 'Dr. Carlos Lopez', '34567890', 'RM54321', 'Neurología', 'carlos@example.com', '555321987');
 SELECT eliminar_medico(1);
+SELECT * FROM obtener_medicos();
 
 -- 4. Funcion crear cita dependiendo de la disponibilidad del medico
 CREATE OR REPLACE FUNCTION crear_cita(
