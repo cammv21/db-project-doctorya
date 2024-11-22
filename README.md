@@ -90,7 +90,7 @@ npm run start:dev
 
 DoctorYA utiliza Swagger para documentar la API. Una vez que el servidor esté corriendo, puedes acceder a la documentación completa en el siguiente enlace:
 
-[Documentación Swagger](http://localhost:3000/docs)
+Documentación Swagger (http://localhost:3000/docs)
 
 ### 7. Probar el Proyecto
 
