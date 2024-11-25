@@ -1,6 +1,7 @@
 import { IsString } from "class-validator";
 
 export class CreateMedicoDto {
+    
     @IsString()
     nombre: string;
 
