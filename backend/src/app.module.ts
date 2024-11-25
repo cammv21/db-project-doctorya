@@ -46,6 +46,7 @@ import { ExamenModule } from './examen/examen.module';
         // username: 'postgres',
         // password: 'postgres',
         // database: 'doctorYa',
+
         // synchronize: true,
         // autoLoadEntities: true,
 

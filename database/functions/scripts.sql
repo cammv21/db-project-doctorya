@@ -111,6 +111,32 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-------------------------------------------------- Medico
+
+CREATE OR REPLACE FUNCTION obtener_medicos()
+RETURNS TABLE (
+    m_id INT,
+    m_nombre VARCHAR,
+    m_identificacion VARCHAR,
+    m_registro_medico VARCHAR,
+    m_especialidad VARCHAR,
+    m_email VARCHAR,
+    m_celular VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        id,
+        nombre,
+        identificacion,
+        registro_medico,
+        especialidad,
+        email,
+        celular
+    FROM medico;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION crear_medico(
     p_nombre VARCHAR,
     p_identificacion VARCHAR,
@@ -694,3 +720,339 @@ END;
 $$;
 
 CALL eliminar_clinica_por_nombre('Clínica San Juan de Dios');
+
+-- Funciones de obtener ciertas tablas
+CREATE OR REPLACE FUNCTION obtener_todas_las_citas()
+RETURNS TABLE(
+    id INT,
+    fecha DATE,
+    hora TIME WITHOUT TIME ZONE,
+    motivo VARCHAR,
+    estado VARCHAR,
+    nombre_medico VARCHAR,
+    nombre_paciente VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT c.id, c.fecha, c.hora, c.motivo, c.estado,
+	       m.nombre AS nombre_medico, p.nombre AS nombre_paciente
+    FROM  cita c
+	    LEFT JOIN medico m ON c.medico_id = m.id
+	    LEFT JOIN paciente p ON c.paciente_id = p.id;
+END;
+$$;
+
+SELECT * FROM obtener_todas_las_citas();
+
+CREATE OR REPLACE FUNCTION obtener_todos_examenes()
+RETURNS TABLE(
+    v_id INT,
+    v_nombre VARCHAR,
+    v_costo FLOAT4,
+    v_cubre_seguro BOOL,
+    v_fecha DATE,
+    v_estado VARCHAR,
+    v_historia_clinica_id INT
+) 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT id, nombre, costo, cubre_seguro, fecha, estado, historia_clinica_id
+    FROM examen;
+END;
+$$;
+
+SELECT * FROM obtener_todos_examenes();
+
+CREATE OR REPLACE FUNCTION obtener_todas_historias_clinicas()
+RETURNS TABLE(
+    id INT,
+    fecha DATE,
+    sintomas VARCHAR,
+    diagnostico VARCHAR,
+    tratamiento VARCHAR,
+    observaciones VARCHAR,
+    cita_id INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY SELECT *
+    FROM historia_clinica;
+END;
+$$;
+
+SELECT * FROM obtener_todas_historias_clinicas();
+
+CREATE OR REPLACE FUNCTION obtener_medicamentos()
+RETURNS TABLE (
+    id INT,
+    nombre VARCHAR,
+    principio_activo VARCHAR,
+    forma_farmaceutica VARCHAR,
+    dosis VARCHAR,
+    indicaciones VARCHAR,
+    duracion VARCHAR,
+    estado VARCHAR,
+    historia_clinica_id INT
+) 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY SELECT *
+    FROM medicamento;
+END;
+$$;
+
+SELECT * FROM obtener_medicamentos();
+
+-- Otros procedimientos
+CREATE OR REPLACE PROCEDURE crear_seguro_medico(
+    p_nombre VARCHAR,
+    p_tipo VARCHAR,
+    p_fecha_inicio DATE,
+    p_fecha_fin DATE,
+    p_celular VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO seguro_medico (nombre, tipo, fecha_inicio, fecha_fin, celular)
+    VALUES (p_nombre, p_tipo, p_fecha_inicio, p_fecha_fin, p_celular);
+
+	RAISE NOTICE 'Se creo el seguro medico';
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
+        RETURN FALSE;
+END;
+$$;
+
+CALL crear_seguro_medico('Seguro Vida','Premium','2024-01-01'::Date,'2025-01-01'::Date,'3001234567');
+
+CREATE OR REPLACE PROCEDURE vincular_seguro_a_paciente(p_paciente_id INT, p_seguro_id INT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE paciente SET seguro_id = p_seguro_id
+    WHERE id = p_paciente_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No se encontró un paciente con el ID %', p_paciente_id;
+    END IF;
+END;
+$$;
+
+CALL vincular_seguro_a_paciente(1, 2);
+
+-- Implementacion de cursores
+CREATE OR REPLACE FUNCTION listar_citas_pendientes_por_medico()
+RETURNS TABLE(medico_nombre VARCHAR, cita_fecha DATE, cita_hora TIME, paciente_nombre VARCHAR)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    cur_citas CURSOR FOR
+        SELECT m.nombre AS medico_nombre, c.fecha AS cita_fecha, 
+            c.hora AS cita_hora, p.nombre AS paciente_nombre
+        FROM cita c
+	        JOIN medico m ON c.medico_id = m.id
+	        JOIN paciente p ON c.paciente_id = p.id
+        WHERE c.estado = 'programada';
+BEGIN
+    OPEN cur_citas;
+
+    LOOP
+        FETCH cur_citas INTO medico_nombre, cita_fecha, cita_hora, paciente_nombre;
+        EXIT WHEN NOT FOUND;
+
+        RETURN NEXT;
+    END LOOP;
+
+    CLOSE cur_citas;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
+END;
+$$;
+
+SELECT * FROM listar_citas_pendientes_por_medico();
+
+CREATE OR REPLACE FUNCTION calcular_disponibilidad_camas()
+RETURNS TABLE(clinica_nombre VARCHAR, camas_disponibles INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    cur_clinicas CURSOR FOR
+        SELECT 
+            id, 
+            (xpath('//clinica/nombre/text()', detalles))[1]::TEXT AS clinica_nombre,
+            (xpath('//clinica/camas/text()', detalles))[1]::TEXT AS total_camas
+        FROM clinica;
+    row RECORD;
+    camas_ocupadas INT;
+BEGIN
+    OPEN cur_clinicas;
+
+    LOOP
+        FETCH cur_clinicas INTO row;
+        EXIT WHEN NOT FOUND;
+
+        SELECT COUNT(*) INTO camas_ocupadas FROM paciente;
+
+        clinica_nombre := row.clinica_nombre;		
+        camas_disponibles := row.total_camas::INT - camas_ocupadas;
+        RETURN NEXT;
+    END LOOP;
+
+    CLOSE cur_clinicas;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
+END;
+$$;
+
+SELECT * FROM calcular_disponibilidad_camas();
+
+CREATE OR REPLACE PROCEDURE registrar_alertas_seguros_vencimiento()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    cur_seguros CURSOR FOR
+        SELECT id, nombre, fecha_fin FROM seguro_medico WHERE fecha_fin <= CURRENT_DATE + INTERVAL '30 days';
+    row RECORD;
+BEGIN
+    OPEN cur_seguros;
+
+    LOOP
+        FETCH cur_seguros INTO row;
+        EXIT WHEN NOT FOUND;
+
+        RAISE NOTICE 'Vencimiento Seguro Médico';
+        RAISE NOTICE 'El seguro %, está próximo a vencer el %', row.nombre, row.fecha_fin; 
+    END LOOP;
+
+    CLOSE cur_seguros;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error: %', SQLERRM;
+END;
+$$;
+
+CALL registrar_alertas_seguros_vencimiento();
+
+-- Registro de disparadores
+CREATE OR REPLACE FUNCTION actualizar_estado_seguro_vencido()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.fecha_fin < CURRENT_DATE THEN
+        RAISE NOTICE 'Seguro % vencido el %', NEW.nombre, NEW.fecha_fin;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_camas_clinica()
+RETURNS TRIGGER AS $$
+DECLARE
+    cantidad_camas INTEGER;
+BEGIN
+    cantidad_camas := COALESCE((xpath('//cantidad_camas/text()', NEW.detalles::xml)::text[])[1]::INTEGER,0);
+
+    IF cantidad_camas < 1 THEN
+        RAISE EXCEPTION 'La clínica debe tener al menos una cama';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION calcular_dosis_total()
+RETURNS TRIGGER AS $$
+DECLARE
+    cantidad_diaria INTEGER; 
+    dias INTEGER; 
+    total_miligramos INTEGER; 
+BEGIN
+    cantidad_diaria := regexp_replace(NEW.dosis, '[^0-9]', '', 'g')::INTEGER;
+    dias := regexp_replace(NEW.duracion, '[^0-9]', '', 'g')::INTEGER;
+
+    total_miligramos := cantidad_diaria * dias;
+
+    RAISE NOTICE 'El paciente tomará un total de % miligramos durante % días', total_miligramos, dias;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_citas_duplicadas()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM cita
+        WHERE paciente_id = NEW.paciente_id AND medico_id = NEW.medico_id AND fecha = NEW.fecha
+    ) THEN
+        RAISE EXCEPTION 'El paciente ya tiene una cita con este médico en esta fecha';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_costo_examen()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.costo < 1 THEN
+        RAISE EXCEPTION 'El debe de tener valor mayor a 0';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_duracion_seguro()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.fecha_inicio >= NEW.fecha_fin THEN
+        RAISE NOTICE 'La fecha de inicio del seguro (%), debe ser anterior a la fecha de finalización (%)', NEW.fecha_inicio, NEW.fecha_fin;
+        RAISE EXCEPTION 'Duración del seguro no válida';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_tipo_seguros()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.tipo != 'Premium' AND NEW.tipo != 'Privado'THEN
+        RAISE EXCEPTION 'El tipo de seguro debe ser Premium o Privado';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verificar_medicamento_duplicado()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM medicamento
+        WHERE nombre = NEW.nombre AND principio_activo = NEW.principio_activo
+    ) THEN
+        RAISE EXCEPTION 'El medicamento % de tipo % ya existe en la base de datos', NEW.nombre, NEW.principio_activo;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION validar_horario_cita()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.hora < '08:00:00'::Time OR NEW.hora > '18:00:00'::Time THEN
+        RAISE EXCEPTION 'El horario de la cita % está fuera del rango permitido (08:00 - 18:00)', NEW.hora;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
