@@ -29,7 +29,10 @@ export class PacienteService {
   
       // Verifica el resultado
       if (result[0]?.success) {
-        return { message: 'Paciente creado exitosamente' };
+        return {
+          message: 'Paciente creado exitosamente',
+          paciente: createPacienteDto
+        };
       } else {
         throw new Error('No se pudo crear el paciente');
       }
@@ -96,7 +99,6 @@ export class PacienteService {
       throw new Error('Error actualizando paciente: ' + error.message);
     }
   }
-  
 
   async remove(id: number) {
     try {

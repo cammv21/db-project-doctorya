@@ -7,26 +7,29 @@ import { DataSource } from 'typeorm';
 export class MedicoService {
   constructor(
     private readonly dataSource: DataSource,
-  ){}
-  
+  ) { }
+
   async create(createMedicoDto: CreateMedicoDto) {
     const { nombre, identificacion, registro_medico, especialidad, email, celular } = createMedicoDto;
 
-  try {
-    const result = await this.dataSource.query(
-      `SELECT crear_medico($1, $2, $3, $4, $5, $6) AS success`,
-      [nombre, identificacion, registro_medico, especialidad, email, celular]
-    );
+    try {
+      const result = await this.dataSource.query(
+        `SELECT crear_medico($1, $2, $3, $4, $5, $6) AS success`,
+        [nombre, identificacion, registro_medico, especialidad, email, celular]
+      );
 
-    if (result[0]?.success) {
-      return { message: 'Médico creado exitosamente' };
-    } else {
-      throw new Error('No se pudo crear el médico');
+      if (result[0]?.success) {
+        return { 
+          message: 'Médico creado exitosamente',
+          medico: createMedicoDto
+        };
+      } else {
+        throw new Error('No se pudo crear el médico');
+      }
+    } catch (error) {
+      console.error('Error creando médico:', error);
+      throw new Error('Error creando médico: ' + error.message);
     }
-  } catch (error) {
-    console.error('Error creando médico:', error);
-    throw new Error('Error creando médico: ' + error.message);
-  }
   }
 
   async findAll() {
@@ -34,7 +37,7 @@ export class MedicoService {
       const result = await this.dataSource.query(
         `SELECT * FROM obtener_medicos()`
       );
-  
+
       return result; // Devuelve un arreglo de médicos
     } catch (error) {
       console.error('Error obteniendo médicos:', error);
@@ -72,7 +75,7 @@ export class MedicoService {
         `SELECT eliminar_medico($1) AS success`,
         [id]
       );
-  
+
       if (result[0]?.success) {
         return { message: 'Médico eliminado exitosamente' };
       } else {

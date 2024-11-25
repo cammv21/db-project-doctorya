@@ -1,5 +1,6 @@
+import { Cita } from "src/cita/entities/cita.entity";
 import { SeguroMedico } from "src/seguro_medico/entities/seguro_medico.entity";
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('paciente')
 export class Paciente {
@@ -30,4 +31,7 @@ export class Paciente {
     @OneToOne(() => SeguroMedico)
     @JoinColumn({ name: 'seguro_id' })
     seguroMedico: SeguroMedico;
+
+    @OneToMany(() => Cita, (cita) => cita.paciente)
+    citas: Cita[];
 }
