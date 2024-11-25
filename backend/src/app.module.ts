@@ -44,8 +44,9 @@ import { ExamenModule } from './examen/examen.module';
         // host: 'localhost',
         // port: 5432,
         // username: 'postgres',
-        // password: '2108',
-        // database: 'db_project_doctorya',
+        // password: 'postgres',
+        // database: 'doctorYa',
+
         // synchronize: true,
         // autoLoadEntities: true,
 

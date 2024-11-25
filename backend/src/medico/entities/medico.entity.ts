@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Cita } from "src/cita/entities/cita.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('medico')
 export class Medico {
@@ -22,4 +23,7 @@ export class Medico {
 
     @Column({ type: 'varchar' })
     celular: string;
+
+    @OneToMany(() => Cita, (cita) => cita.medico)
+    citas: Cita[];
 }
