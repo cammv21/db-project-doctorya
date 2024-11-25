@@ -36,7 +36,7 @@ export class CitaService {
 
   async findAll(): Promise<any[]> {
     try {
-      const result = await this.dataSource.query(`SELECT * FROM public.obtener_citas()`);
+      const result = await this.dataSource.query(`SELECT * FROM public.obtener_todas_las_citas()`);
       return result;
     } catch (error) {
       console.error('Error obteniendo citas:', error);

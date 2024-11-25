@@ -111,32 +111,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--------------------------------------------------- Medico
-
-CREATE OR REPLACE FUNCTION obtener_medicos()
-RETURNS TABLE (
-    m_id INT,
-    m_nombre VARCHAR,
-    m_identificacion VARCHAR,
-    m_registro_medico VARCHAR,
-    m_especialidad VARCHAR,
-    m_email VARCHAR,
-    m_celular VARCHAR
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        id,
-        nombre,
-        identificacion,
-        registro_medico,
-        especialidad,
-        email,
-        celular
-    FROM medico;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION crear_medico(
     p_nombre VARCHAR,
     p_identificacion VARCHAR,
