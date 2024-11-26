@@ -33,4 +33,11 @@ export class SeguroMedicoController {
   remove(@Param('id') id: string) {
     return this.seguroMedicoService.remove(+id);
   }
+
+  @Post('vincular')
+  async vincularSeguroAPaciente(
+    @Body() body: { paciente_id: number, seguro_id: number }
+  ) {
+    return this.seguroMedicoService.vincularSeguroAPaciente(body.paciente_id, body.seguro_id);
+  }
 }

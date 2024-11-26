@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ExamenService } from './examen.service';
-import { CreateExamanDto } from './dto/create-examan.dto';
-import { UpdateExamanDto } from './dto/update-examan.dto';
+import { CreateExamenDto } from './dto/create-examan.dto';
+import { UpdateExamenDto } from './dto/update-examen.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('System - Examen')
@@ -10,8 +10,8 @@ export class ExamenController {
   constructor(private readonly examenService: ExamenService) {}
 
   @Post()
-  create(@Body() createExamanDto: CreateExamanDto) {
-    return this.examenService.create(createExamanDto);
+  create(@Body() createExamenDto: CreateExamenDto) {
+    return this.examenService.create(createExamenDto);
   }
 
   @Get()
@@ -19,18 +19,13 @@ export class ExamenController {
     return this.examenService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.examenService.findOne(+id);
-  }
-
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateExamanDto: UpdateExamanDto) {
-    return this.examenService.update(+id, updateExamanDto);
+  update(@Param('id') id: number, @Body() updateExamenDto: UpdateExamenDto) {
+    return this.examenService.update(id, updateExamenDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.examenService.remove(+id);
+  remove(@Param('id') id: number) {
+    return this.examenService.remove(id);
   }
 }

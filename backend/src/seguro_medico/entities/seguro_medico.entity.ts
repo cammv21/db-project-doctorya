@@ -4,7 +4,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 export class SeguroMedico {
     @PrimaryGeneratedColumn()
     id: number;
-
+    
     @Column({ type: 'varchar', length: 55, nullable: true })
     nombre: string | null;
 

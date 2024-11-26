@@ -8,6 +8,19 @@ $$ LANGUAGE plpgsql;
 
 CALL crear_clinica('<clinica><nombre>Clínica San Juan</nombre><director>Dr. Juan Pérez</director><camas>100</camas><direccion>Calle 123, Ciudad</direccion></clinica>');
 
+CREATE OR REPLACE FUNCTION obtener_todas_clinicas()
+RETURNS TABLE (
+    id SERIAL,
+    detalles XML
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT id, detalles
+    FROM clinica;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM obtener_todas_clinicas();
 -- 10. Clínica en formato json con posibilidad de consultar datos el director de la clínica.
 CREATE OR REPLACE PROCEDURE obtener_director_clinica(p_nombre_clinica VARCHAR)
 AS $$

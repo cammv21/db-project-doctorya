@@ -4,7 +4,7 @@ import { CreateHistoriaClinicaDto } from './dto/create-historia_clinica.dto';
 import { UpdateHistoriaClinicaDto } from './dto/update-historia_clinica.dto';
 import { ApiTags } from '@nestjs/swagger';
 
-@ApiTags('System - Hisotria Clinica')
+@ApiTags('System - Historia Clinica')
 @Controller('historia-clinica')
 export class HistoriaClinicaController {
   constructor(private readonly historiaClinicaService: HistoriaClinicaService) {}
@@ -19,18 +19,13 @@ export class HistoriaClinicaController {
     return this.historiaClinicaService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.historiaClinicaService.findOne(+id);
-  }
-
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateHistoriaClinicaDto: UpdateHistoriaClinicaDto) {
-    return this.historiaClinicaService.update(+id, updateHistoriaClinicaDto);
+  update(@Param('id') id: number, @Body() updateHistoriaClinicaDto: UpdateHistoriaClinicaDto) {
+    return this.historiaClinicaService.update(id, updateHistoriaClinicaDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.historiaClinicaService.remove(+id);
+  remove(@Param('id') id: number) {
+    return this.historiaClinicaService.delete(id);
   }
 }

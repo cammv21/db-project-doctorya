@@ -12,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { HistoriaClinicaModule } from './historia_clinica/historia_clinica.module';
 import { MedicamentoModule } from './medicamento/medicamento.module';
 import { ExamenModule } from './examen/examen.module';
+import { ClinicaModule } from './clinica/clinica.module';
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { ExamenModule } from './examen/examen.module';
     HistoriaClinicaModule,
     MedicamentoModule,
     ExamenModule,
+    ClinicaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

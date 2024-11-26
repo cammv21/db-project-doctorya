@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { Cita } from "src/cita/entities/cita.entity";
 import { SeguroMedico } from "src/seguro_medico/entities/seguro_medico.entity";
 import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
