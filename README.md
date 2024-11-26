@@ -50,12 +50,15 @@ En la carpeta `backend`, crea un archivo `.env` basado en el archivo de ejemplo 
 
 Ejemplo de `.env`:
 ```env
-DB_HOST=localhost
+PORT=3000;
+
+# Database config
+DB_HOST=postgres
 DB_PORT=5432
-DB_USER=tu_usuario
-DB_PASSWORD=tu_contraseña
-DB_NAME=doctorYA
-MONGO_URI=mongodb://localhost:27017/auditoria
+DB_USERNAME= ****
+DB_PASSWORD= ****
+DB_DATABSE= ****
+MONGODB_URI= *****
 ```
 
 ### 4. Configurar la Base de Datos

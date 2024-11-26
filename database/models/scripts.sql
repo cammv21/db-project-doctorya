@@ -151,6 +151,6 @@ CREATE TABLE public.resultado (
 -- Tabla clinica
 CREATE TABLE public.clinica (
 	id serial NOT NULL,
-	detalles jsonb NULL,
+	detalles xml NULL,
 	CONSTRAINT clinica_pk PRIMARY KEY (id)
 );

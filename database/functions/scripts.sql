@@ -205,6 +205,48 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION public.modificar_cita(
+    p_id INT,
+    p_fecha DATE,
+    p_hora TIME,
+    p_motivo VARCHAR,
+    p_estado VARCHAR,
+    p_medico_id INT,
+    p_paciente_id INT
+) RETURNS BOOLEAN AS $$
+BEGIN
+    UPDATE cita
+    SET fecha = p_fecha,
+        hora = p_hora,
+        motivo = p_motivo,
+        estado = p_estado,
+        medico_id = p_medico_id,
+        paciente_id = p_paciente_id
+    WHERE id = p_id;
+
+    RAISE NOTICE 'Cita con ID % modificada correctamente', p_id;
+    RETURN TRUE;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error al modificar la cita: %', SQLERRM;
+        RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.eliminar_cita(p_id INT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    DELETE FROM cita WHERE id = p_id;
+
+    RAISE NOTICE 'Cita con ID % eliminada correctamente', p_id;
+    RETURN TRUE;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error al eliminar la cita: %', SQLERRM;
+        RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Modo de uso de la función
 SELECT crear_cita('2024-11-15', '10:00:00', 'Consulta general', 'programada', 1, 1);
 
