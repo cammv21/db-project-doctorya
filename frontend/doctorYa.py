@@ -64,7 +64,7 @@ except requests.exceptions.RequestException as e:
 #--- TAB Pacientes ---
 with tab1:
     # --- CREAR PACIENTE ---
-    st.subheader("Crear un paciente:")
+    st.subheader("Crear un Paciente:")
 
     col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     # Columnas de los datos a actulizar
@@ -110,7 +110,7 @@ with tab1:
                 st.error(f"Error de conexión: {e}")
 
     # --- MODIFICAR PACIENTE ---
-    st.subheader("Modificar un paciente:")
+    st.subheader("Modificar un Paciente:")
 
     # Inicializar estado persistente
     if "bandera" not in st.session_state:
