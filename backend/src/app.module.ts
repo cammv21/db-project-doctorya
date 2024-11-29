@@ -28,28 +28,27 @@ import { ClinicaModule } from './clinica/clinica.module';
       inject: [ConfigService],
     }),
 
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        synchronize: false,
-        autoLoadEntities: true,
-      }),
+    TypeOrmModule.forRoot({
+      // imports: [ConfigModule],
+      // useFactory: (configService: ConfigService) => ({
+      //   type: 'postgres',
+      //   host: configService.get<string>('DB_HOST'),
+      //   port: configService.get<number>('DB_PORT'),
+      //   username: configService.get<string>('DB_USERNAME'),
+      //   password: configService.get<string>('DB_PASSWORD'),
+      //   database: configService.get<string>('DB_DATABASE'),
+      //   synchronize: false,
+      //   autoLoadEntities: true,
+      // }),
     
-        // type: 'postgres',
-        // host: 'localhost',
-        // port: 5432,
-        // username: 'postgres',
-        // password: 'postgres',
-        // database: 'doctorYa',
-
-        // synchronize: true,
-        // autoLoadEntities: true,
+        type: 'postgres',
+        host: 'localhost',
+        port: 5432,
+        username: 'postgres',
+        password: 'postgres',
+        database: 'doctorYa',
+        synchronize: true,
+        autoLoadEntities: true,
 
       // useFactory: async (configService: ConfigService) => {
       //   const dbUrl = new URL(configService.get<string>('DATABASE_URL'));
@@ -66,7 +65,7 @@ import { ClinicaModule } from './clinica/clinica.module';
       //     autoLoadEntities: true,
       //   };
       // },
-      inject: [ConfigService],
+      // inject: [ConfigService],
     }),
     HealthModule,
     SeguroMedicoModule,
