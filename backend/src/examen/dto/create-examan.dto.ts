@@ -41,7 +41,7 @@ export class CreateExamenDto {
 
     @ApiProperty({
         description: 'Estado del examen',
-        example: 'Pendiente',
+        example: 'pendiente',
         required: false,
     })
     @IsString()

@@ -25,7 +25,7 @@ BEGIN
                     'citas pendientes', sub.citas_pendientes))
             FROM (SELECT paciente_id, COUNT(*) AS citas_pendientes
                 	FROM cita
-                	WHERE estado = 'programada'
+                	WHERE estado = 'Pendiente'
                 	GROUP BY paciente_id) sub
             JOIN paciente p ON p.id = sub.paciente_id));
 END;
@@ -76,3 +76,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 CALL generar_informe_examenes_pendientes();
+
+CREATE OR REPLACE FUNCTION obtener_informes()
+RETURNS TABLE (
+    id INT,
+    fecha DATE,
+    tipo VARCHAR,
+    contenido JSONB
+) AS $$
+BEGIN
+    RETURN QUERY SELECT i.id, i.fecha, i.tipo, i.contenido FROM informe as i;
+END;
+$$ LANGUAGE plpgsql;

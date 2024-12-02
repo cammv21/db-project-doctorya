@@ -53,7 +53,7 @@ export class CreateMedicamentoDto {
 
     @ApiProperty({
         description: 'Estado del medicamento (ejemplo: activo, inactivo)',
-        example: 'Activo',
+        example: 'pendiente',
         required: true,
     })
     @IsString()

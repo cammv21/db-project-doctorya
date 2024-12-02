@@ -13,6 +13,8 @@ import { HistoriaClinicaModule } from './historia_clinica/historia_clinica.modul
 import { MedicamentoModule } from './medicamento/medicamento.module';
 import { ExamenModule } from './examen/examen.module';
 import { ClinicaModule } from './clinica/clinica.module';
+import { InformeModule } from './informe/informe.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
 
 @Module({
   imports: [
@@ -28,27 +30,27 @@ import { ClinicaModule } from './clinica/clinica.module';
       inject: [ConfigService],
     }),
 
-    TypeOrmModule.forRoot({
-      // imports: [ConfigModule],
-      // useFactory: (configService: ConfigService) => ({
-      //   type: 'postgres',
-      //   host: configService.get<string>('DB_HOST'),
-      //   port: configService.get<number>('DB_PORT'),
-      //   username: configService.get<string>('DB_USERNAME'),
-      //   password: configService.get<string>('DB_PASSWORD'),
-      //   database: configService.get<string>('DB_DATABASE'),
-      //   synchronize: false,
-      //   autoLoadEntities: true,
-      // }),
-    
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        username: 'postgres',
-        password: 'postgres',
-        database: 'doctorYa',
-        synchronize: true,
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        synchronize: false,
         autoLoadEntities: true,
+      }),
+    
+        // type: 'postgres',
+        // host: 'localhost',
+        // port: 5432,
+        // username: 'postgres',
+        // password: 'postgres',
+        // database: 'doctorYa',
+        // synchronize: true,
+        // autoLoadEntities: true,
 
       // useFactory: async (configService: ConfigService) => {
       //   const dbUrl = new URL(configService.get<string>('DATABASE_URL'));
@@ -65,7 +67,7 @@ import { ClinicaModule } from './clinica/clinica.module';
       //     autoLoadEntities: true,
       //   };
       // },
-      // inject: [ConfigService],
+      inject: [ConfigService],
     }),
     HealthModule,
     SeguroMedicoModule,
@@ -76,6 +78,8 @@ import { ClinicaModule } from './clinica/clinica.module';
     MedicamentoModule,
     ExamenModule,
     ClinicaModule,
+    InformeModule,
+    AuditoriaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

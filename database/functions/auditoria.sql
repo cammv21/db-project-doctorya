@@ -36,3 +36,42 @@ $$ LANGUAGE plpgsql;
 
 -- Modo de uso de las funcion
 SELECT * FROM buscar_auditoria('2024-12-30'::Date, 'Juan Perez', 'Dra. Ana Gomez');
+
+CREATE OR REPLACE FUNCTION obtener_detalles_cita(cita_id INT)
+RETURNS TABLE (
+    fecha DATE,
+    nombre_paciente VARCHAR,
+    nombre_doctor VARCHAR,
+    motivo_cita VARCHAR,
+    diagnostico VARCHAR,
+    medicamentos JSON
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        c.fecha AS fecha,
+        p.nombre AS nombre_paciente,
+        m.nombre AS nombre_doctor,
+        c.motivo AS motivo_cita,
+        hc.diagnostico AS diagnostico,
+        COALESCE(
+            json_agg(jsonb_build_object('nombre', med.nombre)) FILTER (WHERE med.id IS NOT NULL),
+            '[]'::json
+        ) AS medicamentos
+    FROM 
+        citas c
+    JOIN 
+        pacientes p ON c.paciente_id = p.id
+    JOIN 
+        medicos m ON c.medico_id = m.id
+    LEFT JOIN 
+        historias_clinicas hc ON c.id = hc.cita_id
+    LEFT JOIN 
+        medicamentos med ON hc.id = med.historia_clinica_id
+    WHERE 
+        c.id = cita_id
+    GROUP BY 
+        c.fecha, p.nombre, m.nombre, c.motivo, hc.diagnostico;
+END;
+$$ LANGUAGE plpgsql;
+

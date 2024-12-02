@@ -5,7 +5,7 @@ export class CreateCitaDto {
     
     @ApiProperty({
         description: 'Fecha de la cita',
-        example: '2024-11-25',
+        example: '"2024-11-15T05:00:00.000Z"',
         required: false,
     })
     @IsOptional()
@@ -14,7 +14,7 @@ export class CreateCitaDto {
 
     @ApiProperty({
         description: 'Hora de la cita',
-        example: '10:30',
+        example: '10:00:00',
         required: false,
     })
     @IsOptional()
@@ -32,7 +32,7 @@ export class CreateCitaDto {
 
     @ApiProperty({
         description: 'Estado de la cita (por ejemplo, "Pendiente", "Completada")',
-        example: 'Pendiente',
+        example: 'pendiente',
         required: false,
     })
     @IsOptional()

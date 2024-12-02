@@ -6,28 +6,43 @@ CREATE OR REPLACE FUNCTION crear_cita(
     p_estado VARCHAR,
     p_paciente_id INT,
     p_medico_id INT
-) RETURNS BOOLEAN AS $$
+) RETURNS INTEGER AS $$  -- Cambiamos el tipo de retorno a INTEGER
 DECLARE
     disponibilidad INT := 0;
+    cita_id INT;  -- Variable para almacenar el ID de la cita creada
 BEGIN
-    SELECT COUNT(*) INTO disponibilidad FROM cita
-    WHERE fecha = p_fecha AND hora = p_hora AND medico_id = p_medico_id AND estado = 'programada';
+    -- Verificar disponibilidad del médico
+    SELECT COUNT(*) INTO disponibilidad 
+    FROM cita
+    WHERE fecha = p_fecha 
+    AND hora = p_hora 
+    AND medico_id = p_medico_id 
+    AND estado = 'programada';
 
+    -- Si el médico está disponible, proceder a crear la cita
     IF disponibilidad = 0 THEN
+        -- Insertar la cita y obtener el ID generado
         INSERT INTO cita (fecha, hora, motivo, estado, paciente_id, medico_id)
-        VALUES (p_fecha, p_hora, p_motivo, p_estado, p_paciente_id, p_medico_id);
-		RAISE NOTICE 'Se agendo la cita correctamente';
-        RETURN TRUE;
+        VALUES (p_fecha, p_hora, p_motivo, p_estado, p_paciente_id, p_medico_id)
+        RETURNING id INTO cita_id;  -- Obtenemos el ID de la cita creada
+
+        RAISE NOTICE 'Se agendó la cita correctamente con ID: %', cita_id;
+
+        -- Retornar el ID de la cita creada
+        RETURN cita_id;
     ELSE
-		RAISE NOTICE 'El medico esta ocupado';
-        RETURN FALSE;  
+        -- Si el médico está ocupado
+        RAISE NOTICE 'El médico está ocupado en ese horario';
+        RETURN NULL;  -- Retorna NULL si la cita no se pudo crear
     END IF;
+
 EXCEPTION
     WHEN others THEN
-		RAISE EXCEPTION 'Error al crear la cita: %', SQLERRM;
-        RETURN FALSE;
+        RAISE EXCEPTION 'Error al crear la cita: %', SQLERRM;
+        RETURN NULL;  -- Retorna NULL en caso de error
 END;
 $$ LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION public.modificar_cita(
     p_id INT,
